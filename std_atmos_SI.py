@@ -1,4 +1,3 @@
-import csv
 import numpy as np
 
 def interp(h):
@@ -6,13 +5,7 @@ def interp(h):
     #the temperature (K), Pressure (N/m^2), Density (kg/m^3) and Speed of Sound (m/s)
    
     #import the SI Standard Atmosphere table of data from the CSV file
-    with open("Standard_Atmosphere_SI_table.csv",'r') as csv_file:
-        reader = csv.reader(csv_file, delimiter=',')
-
-        #pull out the headers
-        headers = next(reader)
-
-        data = np.array(list(reader)).astype(float)
+    data = np.genfromtxt("Standard_Atmosphere_SI_table.csv",dtype='float',delimiter=',',skip_header=1)
     
     geo = np.interp(h,data[:,0],data[:,1])
     temp = np.interp(h,data[:,0],data[:,2])
