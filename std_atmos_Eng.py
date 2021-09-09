@@ -5,6 +5,7 @@ def interp(h):
     the temperature (R), Pressure (lbf/ft^2), Density (slugs/ft^3) and Speed of Sound (ft/s) """
     
     #import the English Standard Atmosphere table of data from the CSV file
+    #data comes from Phillips "Mechanics of Flight" Appendix A
     data = np.genfromtxt("Standard_Atmosphere_English_table.csv",dtype='float',delimiter=',',skip_header=1)
     
     geo = np.interp(h,data[:,0],data[:,1])
