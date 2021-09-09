@@ -1,6 +1,7 @@
 import numpy as np
 import std_atmos_Eng
 import std_atmos_SI
+import warnings
 
 class Airplane():
     def __init__(self):
@@ -12,14 +13,30 @@ class Airplane():
         self.Sw = self.wingspan*self.c_bar #wing area
         self.units = 'English'
 
-    def get_density(self,alt):
+    def get_density(self,alt,**kwargs):
+        """ This function accepts the altitude as the argument and returns the density in slugs/ft^3 for "English" and N/m^3 for "SI"
+        The user may specify the units in the input file for the class or using the keyword "units" and specifying "English" or "SI".
+        If the user specifies the units using the keyword in the function call, this will overrite the units set in the input file. """
 
-        #check which units you are using
-        if self.units == 'English':
-            rho = std_atmos_Eng.interp(alt)[3] #return the density from the interpolation 
-        else: #Use SI
-            rho = std_atmos_SI.interp(alt)[3]
-
+        if kwargs: #check if the user input kwargs
+            if 'units' in kwargs: #check if the user used the kwarg 'units'
+                if kwargs['units'] == 'SI': #check if the user specified the units at the time of function call. This will overrite the Input file
+                    rho = std_atmos_SI.interp(alt)[3] #return the density from the interpolation
+                elif kwargs['units'] == 'English':
+                    rho = std_atmos_Eng.interp(alt)[3]
+                else: #stop the code if the user has manually input an incorrect selection for units. 
+                    raise ValueError("The only keyword argument accepted values for 'units' are 'SI' and 'English'.")
+            else: #if the user did not use 'units' as a kwarg then raise value error
+                raise ValueError("The only keyword argument used in get_density is 'units' which can be assigned the value 'SI' or 'English'.")
+        
+        else:  #check which units you are using in the input file
+            if self.units == 'English':
+                rho = std_atmos_Eng.interp(alt)[3]  
+            else: #Use SI
+                if self.units != 'SI': #Should be SI if not English. If not, then print a warning for the user letting them know defaults are SI, but still return density assuming SI
+                    warnings.warn("Units were not specified in the input file as 'English' or 'SI' and no inputs were given in the function call. Defaulting to SI")
+                rho = std_atmos_SI.interp(alt)[3]
+        
         return rho
 
     def get_AR(self):
@@ -46,8 +63,4 @@ class Airplane():
 
 
 test_airplane = Airplane()
-print(test_airplane.get_AR())
-
-print(test_airplane.calc_CD_from_coeff(0.03,0.001,0.7,0.8))
-print('The thrust required is: ',test_airplane.get_T_req(0.7,0.06969,2000))
-print('The power required is: ',test_airplane.get_Pwr_req(199.114,2000,0.7))
+print(test_airplane.get_density(alt=5000))
