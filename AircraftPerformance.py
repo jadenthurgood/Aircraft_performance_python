@@ -5,8 +5,8 @@ import warnings
 
 class Airplane():
     def __init__(self):
-        self.wingspan = 10  #ft
-        self.c_bar = 2 #ft
+        self.wingspan = 25  #ft
+        self.c_bar = 5 #ft
         self.T0 = 5000 #lbf
         self.AR = self.wingspan/self.c_bar
         self.e = 0.8 #Oswald efficiency
@@ -39,8 +39,24 @@ class Airplane():
         
         return rho
 
-    def get_AR(self):
-        return self.wingspan/self.c_bar
+    def get_AR(self,**kwargs):
+        """ This function computes the aspect ratio of the aircraft. It can do this using the input file values, or the user may set the wingspan
+        and average chord length as keyword arguments 'span' and 'c_bar'. If the user specifies the span and chord length in the function call it will overite the 
+        values from the input file if one is given. """
+
+        if kwargs: #check if the user input any kwargs for the aspect ration calculation
+            if ('span' in kwargs) and ('c_bar' not in kwargs): #check if the user only input a span value
+               AR = kwargs['span']/self.c_bar 
+            elif ('c_bar' in kwargs) and ('span' not in kwargs): #check if the user only input the average chord
+                AR = self.wingspan/kwargs['c_bar']
+            elif ('span' and 'c_bar' in kwargs): #Check if the user input both the span and average chord
+                AR = kwargs['span']/kwargs['c_bar']
+            else: #if the user has input kwargs that are neither 'span' or 'c_bar' raise an error. They are trying something incorrect
+                raise ValueError("The only keyword arguments used in get_AR are 'span' and/or 'c_bar'.")
+
+        else: #use the values from the input file to compute the aspect ration
+            AR = self.wingspan/self.c_bar
+        return AR
     
     def calc_steady_level_CL(self,W,V_inf,Sw):
         rho = self.get_density(5000)
@@ -60,7 +76,5 @@ class Airplane():
         Pwr_req = Tr*np.sqrt((2*(W/self.Sw)/(rho*CL)))
         return Pwr_req
 
-
-
 test_airplane = Airplane()
-print(test_airplane.get_density(alt=5000))
+print(test_airplane.get_AR())
