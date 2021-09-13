@@ -1,3 +1,4 @@
+from typing import ValuesView
 import numpy as np
 import std_atmos_Eng
 import std_atmos_SI
@@ -11,6 +12,8 @@ class Airplane():
         self.Sw = self.wingspan*self.c_bar #wing area
 
         #Aricraft Characteristics
+        self.CD0 = 0.03
+        self.CD0_L = 0.001
         self.T0 = 5000 #lbf
         self.e = 0.8 #Oswald efficiency
         self.weight = 800
@@ -121,9 +124,48 @@ class Airplane():
 
         return CL
 
-    def calc_CD_from_coeff(self,CD0,CD0_L,CL, e):
-        rho = self.get_density(5000)
-        CD = CD0 + CD0_L*CL + ((CL*CL)/(np.pi*e*self.AR))
+    def calc_CD_from_coeff(self,CL,**kwargs): #Equation from Warren Phillips "Mechanics of Flight" Eq. (3.2.7)
+        """ This function calculates CD from the coefficients of the parabolic function with respect to a user input CL. The user may specify these values
+        using the input file or at the time of the function call using the kwargs 'CD0', 'CD0_L', 'e' for oswald efficiency, 'AR' for aspect ratio.
+        Any inputs during the time of the function call will overwrite the values from the input file. """
+        
+        #unpack kwargs
+        if kwargs: #check if the user input any kwargs for stead CL calculation
+            
+            if 'CD0' in kwargs: #if the user assigned a CD0 in the function call, then use it. 
+                CD0 = kwargs['CD0']
+            else: #Otherwise, default to the input file value
+                CD0 = self.CD0
+            
+            if 'CD0_L' in kwargs: #if the user assigned a CD0_L in the function call, then use it. 
+                CD0_L = kwargs['CD0_L']
+            else: #Otherwise, default to the input file value
+                CD0_L = self.CD0_L
+            
+            if 'e' in kwargs: #if the user assigned a value for 'e' in the function call, then use it. 
+                e = kwargs['e']
+            else: #Otherwise, default to the input file value
+                e = self.e
+            
+            if 'AR' in kwargs: #if the user assigned a value for 'AR' in the function call, then use it. 
+                AR = kwargs['AR']
+            else: #Otherwise, default to the input file value
+                AR = self.get_AR()
+
+            #if the user inputs a kwarg that is not used without any kwargs that are used. Throw an errorgit 
+            if (any(key in kwargs for key in ('CD0','CD0_L','e','AR'))): 
+                None
+            else:
+                raise ValueError("The only keyword arguments used in calc_CD_from_coeff are any combination of 'CD0', 'CD0_L', 'e', and 'AR'.")
+        
+        else: #use the values from the input file if no kwargs are given
+            CD0 = self.CD0
+            CD0_L = self.CD0_L
+            e = self.e
+            AR = self.get_AR()
+        
+        #compute CD
+        CD = CD0 + CD0_L*CL + ((CL*CL)/(np.pi*e*AR)) #Variation from Eq (3.2.7) from Mechanics of Flight
         return CD
     
     def get_T_req(self,CL,CD,W):
@@ -135,4 +177,4 @@ class Airplane():
         return Pwr_req
 
 test_airplane = Airplane()
-print(test_airplane.calc_steady_level_CL(weight=700))
+print(test_airplane.calc_CD_from_coeff(CL=0.6))
