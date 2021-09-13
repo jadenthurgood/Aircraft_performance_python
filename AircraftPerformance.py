@@ -67,7 +67,7 @@ class Airplane():
     
     def calc_steady_level_CL(self,**kwargs): #function uses the small thrust angle approximation from phillips "Mechanics of Flight" Eq (3.2.24)
         """ This function calculates CL for steady level flight assuming small thrust angles. It can do this using the input file values or the user can
-        manually change the conditions using keyword arguments 'weight', 'V_inf' for freestream velocity, 'Sw' for wing area, and 'alt' for altitude.
+        manually change the conditions using keyword arguments 'weight', 'V_inf' for freestream velocity, 'Sw' for wing area, 'alt' for altitude and 'units'.
         Any kewword input values will override the input file values. """
 
         #unpack the values from kwargs or from Class self
@@ -93,21 +93,30 @@ class Airplane():
             else: #Otherwise, default to the input file value
                 h = self.altitude
             
-            #if the user inputs a kwarg that is not used without any kwargs that are used. Throw an error
-            if (any(key in kwargs for key in ('weight','V_inf','Sw','alt'))): 
+            if 'units' in kwargs: #if the user assigned a units designation in the function call, then use it. 
+                local_units = kwargs['units']
+            else: #Otherwise, use the input file value
+                pass
+            
+            #if the user inputs a kwarg that is not used without any kwargs that are used. Throw an errorgit 
+            if (any(key in kwargs for key in ('weight','V_inf','Sw','alt','units'))): 
                 None
             else:
-                raise ValueError("The only keyword arguments used in calc_steady_level_CL are any combination of 'weight', 'V_inf', 'Sw', and 'alt'.")
+                raise ValueError("The only keyword arguments used in calc_steady_level_CL are any combination of 'weight', 'V_inf', 'Sw', 'alt', and 'units'.")
         
         else: #just use the values from the input file
-            ######## We need to figure out how we are going to handle units here. Should the user have to pass them in? Or do we perform more abstraction with the get density or condition?
             w = self.weight
             V = self.V_inf
             area_ref = self.Sw
             h = self.altitude
         
-        #Perform final calculations
-        rho = self.get_density(h) #get the density
+        #Get the density
+        if 'local_units' in locals():
+            rho = self.get_density(h,units=local_units) #get the density with the user specified units 
+        else: 
+            rho = self.get_density(h)
+
+        #compute CL
         CL = w/(0.5*rho*V*V*area_ref) #from Eq. (3.2.24)
 
         return CL
