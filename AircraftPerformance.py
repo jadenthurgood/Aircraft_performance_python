@@ -167,8 +167,89 @@ class Airplane():
         CD = CD0 + CD0_L*CL + ((CL*CL)/(np.pi*e*AR)) #Variation from Eq (3.2.7) from Mechanics of Flight
         return CD
     
-    def get_T_req(self,CL,CD,W):
-        return (CD/CL)*W
+    def get_T_req(self,type='velocity',minimum=False,**kwargs): #compute the thrust required. From Phillips "Mechanics of Flight" Eqs.(3.2.22 - 3.2.26)
+        """ Computes the thrust required for steady level flight. "type" determines if thrust required is a function of 'velocity', 'coefficients', or 'L/D'.
+        The user may also specify if they want the the minimum thrust required by setting 'minimum' = True. """
+        #Thrust required as a function of velocity
+        if type == 'velocity':
+            #unpack the values from kwargs or from Class self
+            if kwargs: #check if the user input any kwargs for stead CL calculation
+                
+                if 'weight' in kwargs: #if the user assigned a weight in the function call, then use it. 
+                    w = kwargs['weight']
+                else: #Otherwise, default to the input file value
+                    w = self.weight
+
+                if 'V_inf' in kwargs: #if the user assigned a freestream velocity in the function call, then use it. 
+                    V = kwargs['V_inf']
+                else: #Otherwise, default to the input file value
+                    V = self.V_inf
+
+                if 'Sw' in kwargs: #if the user assigned a reference area in the function call, then use it. 
+                    area_ref = kwargs['Sw']
+                else: #Otherwise, default to the input file value
+                    area_ref = self.Sw
+                
+                if 'alt' in kwargs: #if the user assigned an altitude in the function call, then use it. 
+                    h = kwargs['alt']
+                else: #Otherwise, default to the input file value
+                    h = self.altitude
+                
+                if 'CD0' in kwargs: #if the user assigned a CD0 in the function call, then use it. 
+                    CD0 = kwargs['CD0']
+                else: #Otherwise, default to the input file value
+                    CD0 = self.CD0
+                
+                if 'CD0_L' in kwargs: #if the user assigned a CD0_L in the function call, then use it. 
+                    CD0_L = kwargs['CD0_L']
+                else: #Otherwise, default to the input file value
+                    CD0_L = self.CD0_L
+                
+                if 'e' in kwargs: #if the user assigned a value for 'e' in the function call, then use it. 
+                    e = kwargs['e']
+                else: #Otherwise, default to the input file value
+                    e = self.e
+                
+                if 'AR' in kwargs: #if the user assigned a value for 'AR' in the function call, then use it. 
+                    AR = kwargs['AR']
+                else: #Otherwise, default to the input file value
+                    AR = self.get_AR()
+                    
+                if 'units' in kwargs: #if the user assigned a units designation in the function call, then use it. 
+                    local_units = kwargs['units']
+                else: #Otherwise, use the input file value
+                    pass
+                
+                #if the user inputs a kwarg that is not used without any kwargs that are used. Throw an errorgit 
+                if (any(key in kwargs for key in ('weight','V_inf','Sw','alt','CD0','CD0_L','e','AR','units'))): 
+                    None
+                else:
+                    raise ValueError("The only keyword arguments used in calc_steady_level_CL are any combination of 'weight','V_inf','Sw','alt','CD0','CD0_L','e','AR','units'.")
+            
+            else: #just use the values from the input file
+                w = self.weight
+                V = self.V_inf
+                area_ref = self.Sw
+                h = self.altitude
+                CD0 = self.CD0
+                CD0_L = self.CD0_L
+                e = self.e
+                AR = self.get_AR()
+
+            ######What if we handled units with a set_units function. Tather than passing the units everytime we need it. The user could call set_units() and set the global units to 
+            ######what he needed it to be before making a call to another function
+            
+            #Get the density
+            if 'local_units' in locals():
+                rho = self.get_density(h,units=local_units) #get the density with the user specified units 
+            else: 
+                rho = self.get_density(h)
+        
+            term1 = ((0.5*rho*V*V*CD0)/(w/area_ref))
+            term3 = ((w/area_ref)/(0.5*np.pi*e*AR*rho*V*V))
+            T_req = (term1 + CD0_L + term3)*w #Eq. (3.2.25) Mechanics of Flight     
+        
+        return T_req
 
     def get_Pwr_req(self,Tr,W,CL):
         rho = self.get_density(5000)
@@ -176,4 +257,4 @@ class Airplane():
         return Pwr_req
 
 test_airplane = Airplane()
-print(test_airplane.calc_CD_from_coeff(CL=0.6))
+print(test_airplane.get_T_req())
