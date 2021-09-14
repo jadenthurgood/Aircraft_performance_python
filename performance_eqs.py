@@ -57,4 +57,30 @@ def power_req_airspeed(CD0,CD0_L,rho,V,W,Sw,e,Ra):
     term3 = (2*(W/Sw))/(np.pi*e*Ra*rho*V)
     return ((term1 + CD0_L*V + term3)*W)
 
-print(power_req_airspeed(0.03,0.001,0.0023769,150,1200,15,0.8,15.2))
+####This function needs tested
+#Power required as a function of CL and aircraft params
+def power_req_CL(CL,CD0,CD0_L,e,Ra,W,Sw,rho):
+    """ Computes the power required for steady level flight assuming small thrust angles given: Lift coefficient, drag coefficients, oswald efficiency 
+    aspect ratio, weight, wing area, and air density. The output units for power depend on what is input for weight, density, and wing area. """
+
+    #Equation 3.3.6 from Warren Phillips "Mechanics of Flight"
+    term1 = (CD0/(CL**(3/2)))
+    term2 = (CD0_L/np.sqrt(CL))
+    term3 = (np.sqrt(CL)/(np.pi*e*Ra))
+    return(np.sqrt(2)*(term1 + term2 + term3)*W*np.sqrt((W/Sw)/rho))
+
+####This function needs tested
+#Minimum Power Required for small angles
+def power_req_min(CD0,CD0_L,e,Ra,W,Sw,rho):
+    """ Computes the minimum power required for steady level flight assuming small thrust angles given: drag coefficients, oswald efficiency, aspect ratio 
+    weight, wing area, and density. The function returns the minimum power and CL for minimum power. The output units for power depend on what is 
+    input for weight, density, and wing area. """
+
+    #Compute the CL that is required when the airplane is flying at minimum power
+    #Equation 3.3.10 from Warren Phillips "Mechanics of Flight"
+    term2 = np.sqrt(CD0_L**2 + ((12*CD0)/(np.pi*e*Ra)))
+    CL_min_power = ((np.pi*e*Ra)/2)*(CD0_L + term2)
+
+    #Compute the minimum power required by passing the necessary CL for minimum power to the power req_CL function
+    Pr_min = power_req_CL(CL_min_power,CD0,CD0_L,e,Ra,W,Sw,rho)
+    return [Pr_min,CL_min_power]
