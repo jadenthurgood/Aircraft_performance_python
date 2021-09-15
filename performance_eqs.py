@@ -84,3 +84,9 @@ def power_req_min(CD0,CD0_L,e,Ra,W,Sw,rho):
     #Compute the minimum power required by passing the necessary CL for minimum power to the power req_CL function
     Pr_min = power_req_CL(CL_min_power,CD0,CD0_L,e,Ra,W,Sw,rho)
     return [Pr_min,CL_min_power]
+
+#----------------------Velocities-------------------------
+
+#Climb velocity (rate of climb)
+def velocity_climb(pwr_avail,pwr_req,W):
+    """ Computes the climb rate """
