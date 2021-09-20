@@ -4,7 +4,7 @@ import numpy as np
 
 #L/D max
 def L2D_max(e,Ra,CD0,CD0_L):
-    """ Computes the maximum lift-to-drag ratio given an oswald efficiency, aspect ratio, and the coefficiencts of drag with respect to lift. """
+    #""" Computes the maximum lift-to-drag ratio given an oswald efficiency, aspect ratio, and the coefficiencts of drag with respect to lift. """
 
     #Equation 3.2.13 from Warren Phillips "Mechanics of Flight"
     num = np.sqrt(np.pi*e*Ra)
@@ -60,8 +60,18 @@ def power_req_arspd(CD0,CD0_L,rho,V,W,Sw,e,Ra):
 ####This function needs tested
 #Power required as a function of CL and aircraft params
 def power_req_CL(CL,CD0,CD0_L,e,Ra,W,Sw,rho):
-    """ Computes the power required for steady level flight assuming small thrust angles given: Lift coefficient, drag coefficients, oswald efficiency 
-    aspect ratio, weight, wing area, and air density. The output units for power depend on what is input for weight, density, and wing area. """
+    """Computes the power required for steady level flight assuming small thrust angles. The output units for power depend on what is input for weight, density, and wing area. 
+    
+    Args:
+        CL (float): Lift coefficient
+        CD0 (float): Drag coefficient at zero lift
+        CD0_L (float): The linear coefficient in the parabolic relation for drag coefficient as a function of the lift coefficient.
+        e (float): Oswald efficiency (0-1)
+        Ra (float): Aspect ratio of the main wing
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing      
+        rho (float): air density       
+    """
 
     #Equation 3.3.6 from Warren Phillips "Mechanics of Flight"
     term1 = (CD0/(CL**(3/2)))
@@ -72,9 +82,18 @@ def power_req_CL(CL,CD0,CD0_L,e,Ra,W,Sw,rho):
 ####This function needs tested
 #Minimum Power Required for small angles
 def power_req_min(CD0,CD0_L,e,Ra,W,Sw,rho):
-    """ Computes the minimum power required for steady level flight assuming small thrust angles given: drag coefficients, oswald efficiency, aspect ratio 
-    weight, wing area, and density. The function returns the minimum power and CL for minimum power. The output units for power depend on what is 
-    input for weight, density, and wing area. """
+    """Computes the minimum power required for steady level flight assuming small thrust angles. The function returns the minimum power 
+    and CL for minimum power as a list [min_pwr, CL_for_min_pwr]. The output units for power depend on what is input for weight, density, and wing area. 
+    
+    Args:
+        CD0 (float): Drag coefficient at zero lift
+        CD0_L (float): The linear coefficient in the parabolic relation for drag coefficient as a function of the lift coefficient.
+        e (float): Oswald efficiency (0-1)
+        Ra (float): Aspect ratio of the main wing
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): air density        
+    """
 
     #Compute the CL that is required when the airplane is flying at minimum power
     #Equation 3.3.10 from Warren Phillips "Mechanics of Flight"
@@ -90,9 +109,14 @@ def power_req_min(CD0,CD0_L,e,Ra,W,Sw,rho):
 ####This function needs tested
 #Climb velocity (rate of climb) computed using power available and power required
 def velocity_climb_power(pwr_avail,pwr_req,W):
-    """ Computes the climb rate based on the excess power available over the power required for steady level flight. 
-    The function assumes small climb angles. Accepts as arguments: power available, power required for steady level flight 
-    (which can be computed using power_req_basic(), power_req_arspd(), and power_req_CL()), and the weight of the aircraft."""
+    """Computes the climb rate based on the excess power available over the power required for steady level flight. 
+    The function assumes small climb angles.
+    
+    Args:
+        pwr_avail (float): Power available
+        pwr_req (float): Power required for steady level flight
+        W (float): Weight of the aircraft
+    """
     
     #Equation 3.4.8 from Warren Phillips "Mechanics of Flight"
     return ((pwr_avail - pwr_req)/W)
@@ -100,8 +124,19 @@ def velocity_climb_power(pwr_avail,pwr_req,W):
 ####This function needs tested
 #Climb velocity (rate of climb) computed using Thrust available and other aircraft properties
 def velocity_climb_arspd(Ta,W,V,CD0,CD0_L,rho,Sw,e,Ra):
-    """ Computes the climb rate based on the thrust available assuming small thrust angles and small climb angles. Accepts as arguments: 
-    Thrust available, aircraft weight, airspeed, drag coefficients, air density, wing area, oswald efficiency, and aspect ratio."""
+    """Computes the climb rate based on the thrust available assuming small thrust angles and small climb angles.
+    
+    Args:
+        Ta (float): Oswald efficiency factor (0-1)
+        W (float): Weight of the aircraft
+        V (float): Airspeed
+        CD0 (float): Drag coefficient at zero lift
+        CD0_L (float): The linear coefficient in the parabolic relation for drag coefficient as a function of the lift coefficient.
+        rho (float): air density
+        Sw (float): Area of the main wing
+        e (float): Oswald efficiency (0-1)
+        Ra (float): Aspect ratio of the main wing
+    """
 
     #Page 283 from Warren Phillips "Mechanics of Flight"
     term1 = (Ta/W)*V
@@ -180,4 +215,3 @@ def sink_rate_min(CD0,rho,W,Sw,e,Ra):
     return (frac1*frac2)
 
 #####Best Glide Airspeeds and Glide Ratios#####
-
