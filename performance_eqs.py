@@ -299,5 +299,93 @@ def sink_rate_min(CD0,rho,W,Sw,e,Ra):
     frac2 = np.sqrt((W/Sw)/rho)
     return (frac1*frac2)
 
+#minimum sink airspeed
+def velocity_min_sink(e,Ra,CD0,CD0_L,W,Sw,rho):
+    """Computes the airspeed to fly for minimum sink or maximum endurance given certain aircraft parameters from eq 3.8.1 of Phillips "Mechanics of Flight".
+
+    Args:
+        e (float): Oswald efficiency factor (0-1)
+        Ra (float): Aspect ratio of the main wing
+        CD0 (float): Drag coefficient at zero lift
+        CD0_L (float): The linear coefficient in the parabolic relation for drag coefficient as a function of the lift coefficient.
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): air density
+    """
+    return(velocity_min_pwr(e,Ra,CD0,CD0_L,W,Sw,rho))
+
+#maximum endurance airspeed
+def velocity_max_endur(e,Ra,CD0,CD0_L,W,Sw,rho):
+    """Computes the airspeed to fly for maximum endurance or minimum sink given certain aircraft parameters from eq 3.8.1 of Phillips "Mechanics of Flight".
+
+    Args:
+        e (float): Oswald efficiency factor (0-1)
+        Ra (float): Aspect ratio of the main wing
+        CD0 (float): Drag coefficient at zero lift
+        CD0_L (float): The linear coefficient in the parabolic relation for drag coefficient as a function of the lift coefficient.
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): air density
+    """
+    return(velocity_min_pwr(e,Ra,CD0,CD0_L,W,Sw,rho))
+
+#minimum drag velocity
+def velocity_min_drag(e,Ra,CD0,W,Sw,rho):
+    """Computes the airspeed to fly for minimum drag given certain aircraft parameters from eq 3.8.2 of Phillips "Mechanics of Flight".
+
+    Args:
+        e (float): Oswald efficiency factor (0-1)
+        Ra (float): Aspect ratio of the main wing
+        CD0 (float): Drag coefficient at zero lift
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): air density
+    """
+    #equation 3.8.2 from Warren Phillips "Mechanics of Flight"
+    frac1 = (np.sqrt(2)/((np.pi*e*Ra*CD0)**(1/4)))
+    frac2 = np.sqrt((W/Sw)/rho)
+    return (frac1*frac2)
+
+#Best Glide Airspeed
+def velocity_best_glide(e,Ra,CD0,W,Sw,rho):
+    """Computes the airspeed to fly for gest glide or max range given certain aircraft parameters from eq 3.8.2 of Phillips "Mechanics of Flight".
+
+    Args:
+        e (float): Oswald efficiency factor (0-1)
+        Ra (float): Aspect ratio of the main wing
+        CD0 (float): Drag coefficient at zero lift
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): air density
+    """
+    return (velocity_min_drag(e,Ra,CD0,W,Sw,rho))
+
+#Maximum Range
+def velocity_max_range(e,Ra,CD0,W,Sw,rho):
+    """Computes the airspeed to fly for max range or gest glide given certain aircraft parameters from eq 3.8.2 of Phillips "Mechanics of Flight".
+
+    Args:
+        e (float): Oswald efficiency factor (0-1)
+        Ra (float): Aspect ratio of the main wing
+        CD0 (float): Drag coefficient at zero lift
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): air density
+    """
+    return (velocity_min_drag(e,Ra,CD0,W,Sw,rho))
+
+#Stall Speed
+def velocity_stall(CL_max,W,Sw,rho):
+    """Computes the stall speed of the aircraft from eq 3.8.3 of Phillips "Mechanics of Flight"
+
+    Args:
+        CL_max (float): Maximum possible lift coefficient of the aircraft
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): Air density
+    """
+    #Equation 3.8.3 from Warren Phillips "Mechanics of Flight"
+    return (np.sqrt(2/CL_max)*np.sqrt((W/Sw)/rho))
+
 #####Best Glide Airspeeds and Glide Ratios#####
-print (climb_rate_arspd(6500,20000,528,0.023,0.0,0.0023769,320,0.82,9.1125,False))
+
