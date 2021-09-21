@@ -347,18 +347,46 @@ def velocity_min_drag(e,Ra,CD0,W,Sw,rho):
     return (frac1*frac2)
 
 #Best Glide Airspeed
-def velocity_best_glide(e,Ra,CD0,W,Sw,rho):
-    """Computes the airspeed to fly for gest glide or max range given certain aircraft parameters from eq 3.8.2 of Phillips "Mechanics of Flight".
+def velocity_best_glide(e,Ra,CD0,CD0_L,W,Sw,rho,headwind=0):
+    """Computes the airspeed to fly for gest glide or max range given certain aircraft 
+    parameters from eq 3.8.2 of Phillips "Mechanics of Flight" Returns a list of 
+    [best_glide_velocity, best_glide_ratio]. Assumes the small climb/glide angle approxmiations
 
     Args:
         e (float): Oswald efficiency factor (0-1)
         Ra (float): Aspect ratio of the main wing
         CD0 (float): Drag coefficient at zero lift
+        CD0_L (float): The linear coefficient in the parabolic relation for drag coefficient as a function of the lift coefficient.
         W (float): Weight of the aircraft
         Sw (float): Area of the main wing
-        rho (float): air density
+        rho (float): Air density
+        headwind (float): Headwind airspeed. Positive indicates a headwind. Negative indicates a tailwind. 
     """
-    return (velocity_min_drag(e,Ra,CD0,W,Sw,rho))
+    if headwind == 0:
+        #with no head or tailwind then best glide airspeed is just the minimum drag airspeed.
+        V_best_glide = velocity_min_drag(e,Ra,CD0,W,Sw,rho)
+        #compute the max glide ratio for zero wind Equation 3.7.19 from Phillips "Mechanics of FLight"
+        numerator = np.sqrt(np.pi*e*Ra)
+        denominator = (2*np.sqrt(CD0) + CD0_L*numerator)
+        RG_best = numerator/denominator
+
+    else: #There is a head or tailwind
+        #set some constants that will be used in the equation of the derivative of the glide ratio w.r.t Rv from eq 3.7.25 but with CD0_L
+        #Can reference "Glide_ration_deriv_with_CD0_L.png" in the directory.
+        Rv_hw = (headwind/(np.sqrt((W/Sw)/rho)))
+        A = CD0/2
+        B = CD0_L
+        C = (2/(np.pi*e*Ra))
+        D = Rv_hw
+        h = lambda x: (-2*A*x**5 + 3*A*D*x**4 + B*D*x*x + 2*C*x - C*D)/((A*x**4 + B*x*x + C)**2)
+        Rv_guess = (4/(np.pi*e*Ra*CD0))**(1/4) #use zero wind Velocity ratio (eq. 3.7.24) as the initial guess for the newton solver 
+        Rv = newton(h,Rv_guess,maxiter=10000)
+        V_best_glide = Rv*np.sqrt((W/Sw)/rho)
+        
+        #compute the max glide ratio with wind from eq 3.7.25 but with CD0_L
+        RG_best = (1 - (Rv_hw/Rv))/(A*Rv*Rv + CD0_L + C/(Rv*Rv))
+
+    return [V_best_glide,RG_best]
 
 #Maximum Range
 def velocity_max_range(e,Ra,CD0,W,Sw,rho):
@@ -387,5 +415,5 @@ def velocity_stall(CL_max,W,Sw,rho):
     #Equation 3.8.3 from Warren Phillips "Mechanics of Flight"
     return (np.sqrt(2/CL_max)*np.sqrt((W/Sw)/rho))
 
-#####Best Glide Airspeeds and Glide Ratios#####
+print (velocity_best_glide(0.82,6.05,0.023,0.0,2700,180,0.0023769,0))
 
