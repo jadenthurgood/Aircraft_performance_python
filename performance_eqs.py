@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import newton
 
 #----------------------Thrust-------------------------
 
@@ -159,7 +160,7 @@ def power_req_min(CD0,CD0_L,e,Ra,W,Sw,rho):
 
 ####This function needs tested
 #Climb velocity (rate of climb) computed using power available and power required
-def velocity_climb_power(pwr_avail,pwr_req,W):
+def climb_rate_power(pwr_avail,pwr_req,W):
     """Computes the climb rate based on the excess power available over the power required for steady level flight. 
     The function assumes small climb angles.
     
@@ -172,9 +173,8 @@ def velocity_climb_power(pwr_avail,pwr_req,W):
     #Equation 3.4.8 from Warren Phillips "Mechanics of Flight"
     return ((pwr_avail - pwr_req)/W)
 
-####This function needs tested
 #Climb velocity (rate of climb) computed using Thrust available and other aircraft properties
-def velocity_climb_arspd(Ta,W,V,CD0,CD0_L,rho,Sw,e,Ra):
+def climb_rate_arspd(Ta,W,V,CD0,CD0_L,rho,Sw,e,Ra,small_climb_angle=True):
     """Computes the climb rate based on the thrust available assuming small thrust angles and small climb angles.
     
     Args:
@@ -187,12 +187,46 @@ def velocity_climb_arspd(Ta,W,V,CD0,CD0_L,rho,Sw,e,Ra):
         Sw (float): Area of the main wing
         e (float): Oswald efficiency (0-1)
         Ra (float): Aspect ratio of the main wing
+        small_climb_angle (bool): Defaults to "True". When "True", assumes small climb angle approximation. When "False", accounts for climb angles, and sets CD0_L = 0 for computational purposes. Results are valid only when CD0_L is approx "0"
     """
+    if small_climb_angle: #small climb angle approximations
+        #Page 283 from Warren Phillips "Mechanics of Flight"
+        term1 = (Ta/W)*V
+        terms2_4 = (power_req_arspd(CD0,CD0_L,rho,V,W,Sw,e,Ra))/W
+        Vc = (term1 - terms2_4)
 
-    #Page 283 from Warren Phillips "Mechanics of Flight"
-    term1 = (Ta/W)*V
-    terms2_4 = (power_req_arspd(CD0,CD0_L,rho,V,W,Sw,e,Ra))/W
-    return (term1 - terms2_4)
+    else: #without using the small climb angle approximation 
+        #compute CL Equations come from the image titled "CL_equations_climb_angle" 
+        #Comes from trying to solve the equation on page 283 of Phillips "Mechanics of Flight"
+        A = ((0.5*rho*V*V*Sw)/W)
+        B = (1/(np.pi*e*Ra))
+        C = Ta/W
+
+        const1 = (np.sqrt(4*A*A*B*CD0 + A*A - 4*A*B*C + 4*B*B)/(A*B*B))
+        const2 = ((2*C)/(A*B))
+        const3 = 1/(B*B)
+        const4 = ((2*CD0)/B)
+
+        CL1 = -((np.sqrt(-const1 + const2 - const3 - const4))/np.sqrt(2))
+        CL2 = ((np.sqrt(-const1 + const2 - const3 - const4))/np.sqrt(2))
+        CL3 = -np.sqrt(0.5*(const1 + const2 - const3 - const4))
+        CL4 = np.sqrt(0.5*(const1 + const2 - const3 - const4))
+        
+        #find the CL that is positive and real.
+        #put the computed CL values in a list
+        CL_list = [CL1,CL2,CL3,CL4]
+        #remove the NaN's from the list
+        real_CL_list = [x for x in CL_list if np.isnan(x) == False]
+        #select the positive value which is the only element in the list at this point. So index at [0]
+        positive_CL = [y for y in real_CL_list if y >= 0][0]
+        
+        #compute gamma
+        gamma = np.arccos(A*positive_CL)
+
+        #compute Vc
+        Vc = V*np.sin(gamma)
+
+    return Vc
 
 ####This function needs tested
 #Minimum Power Required airspeed
@@ -266,3 +300,4 @@ def sink_rate_min(CD0,rho,W,Sw,e,Ra):
     return (frac1*frac2)
 
 #####Best Glide Airspeeds and Glide Ratios#####
+print (climb_rate_arspd(6500,20000,528,0.023,0.0,0.0023769,320,0.82,9.1125,False))
