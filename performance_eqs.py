@@ -112,7 +112,8 @@ def power_req_arspd(CD0,CD0_L,rho,V,W,Sw,e,Ra):
 ####This function needs tested
 #Power required as a function of CL and aircraft params
 def power_req_CL(CL,CD0,CD0_L,e,Ra,W,Sw,rho):
-    """Computes the power required for steady level flight assuming small thrust angles. The output units for power depend on what is input for weight, density, and wing area. 
+    """Computes the power required for steady level flight assuming small thrust angles. The output
+     units for power depend on what is input for weight, density, and wing area. 
     
     Args:
         CL (float): Lift coefficient
@@ -231,7 +232,8 @@ def climb_rate_arspd(Ta,W,V,CD0,CD0_L,rho,Sw,e,Ra,small_climb_angle=True):
 ####This function needs tested
 #Minimum Power Required airspeed
 def velocity_min_pwr(e,Ra,CD0,CD0_L,W,Sw,rho):
-    """Computes the velocity required for minimum power consumption given certain aircraft parameters from eq 3.7.4 of Phillips "Mechanics of Flight".
+    """Computes the velocity required for minimum power consumption given certain 
+    aircraft parameters from eq 3.7.4 of Phillips "Mechanics of Flight".
 
     Args:
         e (float): Oswald efficiency factor (0-1)
@@ -301,7 +303,8 @@ def sink_rate_min(CD0,rho,W,Sw,e,Ra):
 
 #minimum sink airspeed
 def velocity_min_sink(e,Ra,CD0,CD0_L,W,Sw,rho):
-    """Computes the airspeed to fly for minimum sink or maximum endurance given certain aircraft parameters from eq 3.8.1 of Phillips "Mechanics of Flight".
+    """Computes the airspeed to fly for minimum sink or maximum endurance given certain
+     aircraft parameters from eq 3.8.1 of Phillips "Mechanics of Flight".
 
     Args:
         e (float): Oswald efficiency factor (0-1)
@@ -316,7 +319,8 @@ def velocity_min_sink(e,Ra,CD0,CD0_L,W,Sw,rho):
 
 #maximum endurance airspeed
 def velocity_max_endur(e,Ra,CD0,CD0_L,W,Sw,rho):
-    """Computes the airspeed to fly for maximum endurance or minimum sink given certain aircraft parameters from eq 3.8.1 of Phillips "Mechanics of Flight".
+    """Computes the airspeed to fly for maximum endurance or minimum sink given certain
+     aircraft parameters from eq 3.8.1 of Phillips "Mechanics of Flight".
 
     Args:
         e (float): Oswald efficiency factor (0-1)
@@ -331,7 +335,8 @@ def velocity_max_endur(e,Ra,CD0,CD0_L,W,Sw,rho):
 
 #minimum drag velocity
 def velocity_min_drag(e,Ra,CD0,W,Sw,rho):
-    """Computes the airspeed to fly for minimum drag given certain aircraft parameters from eq 3.8.2 of Phillips "Mechanics of Flight".
+    """Computes the airspeed to fly for minimum drag given certain aircraft parameters
+     from eq 3.8.2 of Phillips "Mechanics of Flight".
 
     Args:
         e (float): Oswald efficiency factor (0-1)
@@ -388,7 +393,7 @@ def velocity_best_glide(e,Ra,CD0,CD0_L,W,Sw,rho,headwind=0):
 
     return [V_best_glide,RG_best]
 
-#Maximum Range
+#Maximum Range Airspeed
 def velocity_max_range(e,Ra,CD0,W,Sw,rho):
     """Computes the airspeed to fly for max range or gest glide given certain aircraft parameters from eq 3.8.2 of Phillips "Mechanics of Flight".
 
@@ -415,5 +420,5 @@ def velocity_stall(CL_max,W,Sw,rho):
     #Equation 3.8.3 from Warren Phillips "Mechanics of Flight"
     return (np.sqrt(2/CL_max)*np.sqrt((W/Sw)/rho))
 
-print (velocity_best_glide(0.82,6.05,0.023,0.0,2700,180,0.0023769,0))
 
+#----------------------Turns and Loads-------------------------
