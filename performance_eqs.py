@@ -31,7 +31,7 @@ def thrust_req_coeff(CL,CD,W):
     """
 
     #Equation 3.2.23 from Warren Phillips "Mechanics of Flight"
-    return(CD/CL)*W
+    return (CD/CL)*W
 
 #Thrust Required as a function of velocity and other aircraft parameters
 def thrust_req_arspd(rho,V,CD0,CD0_L,W,Sw,e,Ra):
@@ -86,7 +86,7 @@ def power_req_basic(Tr,W,Sw,rho,CL):
     """
 
     #Equation 3.3.4 from Warren Phillips "Mechanics of Flight"
-    return(Tr*np.sqrt((2*(W/Sw))/(rho*CL)))
+    return (Tr*np.sqrt((2*(W/Sw))/(rho*CL)))
 
 #Power required as a function of airspeed and aircraft params
 def power_req_arspd(CD0,CD0_L,rho,V,W,Sw,e,Ra):
@@ -130,7 +130,7 @@ def power_req_CL(CL,CD0,CD0_L,e,Ra,W,Sw,rho):
     term1 = (CD0/(CL**(3/2)))
     term2 = (CD0_L/np.sqrt(CL))
     term3 = (np.sqrt(CL)/(np.pi*e*Ra))
-    return(np.sqrt(2)*(term1 + term2 + term3)*W*np.sqrt((W/Sw)/rho))
+    return (np.sqrt(2)*(term1 + term2 + term3)*W*np.sqrt((W/Sw)/rho))
 
 ####This function needs tested
 #Minimum Power Required for small angles
@@ -145,7 +145,10 @@ def power_req_min(CD0,CD0_L,e,Ra,W,Sw,rho):
         Ra (float): Aspect ratio of the main wing
         W (float): Weight of the aircraft
         Sw (float): Area of the main wing
-        rho (float): air density        
+        rho (float): air density  
+
+    Returns:
+        list: [minimum power required, CL that is required when flying at min power]      
     """
 
     #Compute the CL that is required when the airplane is flying at minimum power
@@ -315,7 +318,7 @@ def velocity_min_sink(e,Ra,CD0,CD0_L,W,Sw,rho):
         Sw (float): Area of the main wing
         rho (float): air density
     """
-    return(velocity_min_pwr(e,Ra,CD0,CD0_L,W,Sw,rho))
+    return (velocity_min_pwr(e,Ra,CD0,CD0_L,W,Sw,rho))
 
 #maximum endurance airspeed
 def velocity_max_endur(e,Ra,CD0,CD0_L,W,Sw,rho):
@@ -331,7 +334,7 @@ def velocity_max_endur(e,Ra,CD0,CD0_L,W,Sw,rho):
         Sw (float): Area of the main wing
         rho (float): air density
     """
-    return(velocity_min_pwr(e,Ra,CD0,CD0_L,W,Sw,rho))
+    return (velocity_min_pwr(e,Ra,CD0,CD0_L,W,Sw,rho))
 
 #minimum drag velocity
 def velocity_min_drag(e,Ra,CD0,W,Sw,rho):
@@ -365,7 +368,10 @@ def velocity_best_glide(e,Ra,CD0,CD0_L,W,Sw,rho,headwind=0):
         W (float): Weight of the aircraft
         Sw (float): Area of the main wing
         rho (float): Air density
-        headwind (float): Headwind airspeed. Positive indicates a headwind. Negative indicates a tailwind. 
+        headwind (float): Headwind airspeed. Positive indicates a headwind. Negative indicates a tailwind.
+
+    Returns:
+        list: [Best glide airspeed, best glide ratio] 
     """
     if headwind == 0:
         #with no head or tailwind then best glide airspeed is just the minimum drag airspeed.
