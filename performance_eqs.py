@@ -422,3 +422,92 @@ def velocity_stall(CL_max,W,Sw,rho):
 
 
 #----------------------Turns and Loads-------------------------
+
+#Turning radius 
+def turn_radius(V,phi,g,gamma=0,small_climb_angle=True):
+    """Computes the turning radius of an aircraft from eq. 3.9.6 of Phillips "Mechanics of Flight"
+
+    Args:
+        V (float): airspeed
+        phi (float): bank angle in radians
+        g (float): acceleration due to gravity
+        gamma (float): climb angle in radians (measured from the local horizontal to the flight path). Defaults to 0. Only used if small_climb_angle is set to "False"
+        small_climb_angle (bool): Defaults to "True". When "True", assumes small climb angle approximation. When "False", accounts for climb angles.
+    """
+    #Equation 3.9.6 from Warren Phillips "Mechanics of Flight"
+    #Phi cannot be 90 or -90 degrees
+    if phi > -1.571 and phi < 1.5706: #These are the radian values
+        #check if using small climb angle approximation
+        if small_climb_angle:
+            R = (V*V)/(g*np.tan(phi))
+        #Use gamma if not using small climb angle approximation
+        else:
+            R = ((V*V*np.cos(gamma))/(g*np.tan(phi)))
+    else:
+        raise ValueError("Turning radius equation is undefined for a value of -90 or 90 degrees. \
+            \nAlso does not accept values of phi greater than 90 and less than -90 degrees")
+
+    return R
+
+##Turning Climb velocity (rate of climb in a turn) computed using Thrust available and other aircraft properties
+def turning_climb_rate_arspd(Ta,W,V,CD0,CD0_L,rho,Sw,e,Ra,phi,gamma=0,small_climb_angle=True):
+    """Computes the turning climb rate based on the thrust available assuming small thrust angles.
+    
+    Args:
+        Ta (float): Oswald efficiency factor (0-1)
+        W (float): Weight of the aircraft
+        V (float): Airspeed
+        CD0 (float): Drag coefficient at zero lift
+        CD0_L (float): The linear coefficient in the parabolic relation for drag coefficient as a function of the lift coefficient.
+        rho (float): air density
+        Sw (float): Area of the main wing
+        e (float): Oswald efficiency (0-1)
+        Ra (float): Aspect ratio of the main wing
+        phi (float): bank angle in radians
+        gamma (float): climb angle in radians (measured form the local horizontal to the flight path). Defaults to 0. Only used if small_climb_angle is set to "False"
+        small_climb_angle (bool): Defaults to "True". When "True", assumes small climb angle approximation. When "False", accounts for climb angles.
+    """
+    if phi > -1.571 and phi < 1.5706: #These are the radian values
+
+        if small_climb_angle: #small climb angle approximations
+            #Eq. 3.9.11 from Warren Phillips "Mechanics of Flight"
+            term1 = Ta*V
+            term2 = 0.5*rho*V*V*V*Sw*CD0
+            term3 = (W/(np.cos(phi)))
+            term4 = CD0_L*V*term3
+            term5 = (1/(0.5*np.pi*e*Ra*rho*V*Sw))*term3*term3
+            num = term1 - (term2 + term4 + term5)
+            
+            Vc = num/W
+
+        else:
+            #Eq. 3.9.9 from Warren Phillips "Mechanics of Flight"
+            term1 = Ta*V
+            term2 = 0.5*rho*V*V*V*Sw*CD0
+            term3 = ((W*np.cos(gamma))/(np.cos(phi)))
+            term4 = CD0_L*V*term3
+            term5 = (1/(0.5*np.pi*e*Ra*rho*V*Sw))*term3*term3
+            num = term1 - (term2 + term4 + term5)
+            
+            Vc = num/W
+    else:
+        raise ValueError("Turning radius equation is undefined for a value of -90 or 90 degrees. \
+            \nAlso does not accept values of phi greater than 90 and less than -90 degrees")
+    
+    return Vc
+
+#Stall Limited Bank Angle
+def stall_limited_bank(W,rho,V,Sw, CL_max):
+    """Computes the stall limited bank angle of an aircraft (in radians) using eq. 3.9.12 from Warren Phillips "Mechanics of Flight"
+
+    Args:
+        W (float): Weight of the aircraft
+        rho (float): Air density
+        V (float): Airspeed
+        Sw (float): Area of the main wing
+        CL_max (float): Max lift coefficient of the aircraft
+    """
+    #Eq. 3.9.12 from Warren Phillips Mechanics of Flight
+    stall_limited_phi = np.arccos(W/(0.5*rho*V*V*Sw*CL_max))
+    
+    return stall_limited_phi
