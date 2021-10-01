@@ -1,6 +1,6 @@
 import numpy as np
-import std_atmos_Eng
-import std_atmos_SI
+from Standard_Atmosphere import std_atmos_Eng
+from Standard_Atmosphere import std_atmos_SI 
 import warnings
 
 class Airplane():

@@ -6,7 +6,7 @@ def interp(h):
    
     #import the SI Standard Atmosphere table of data from the CSV file
     #data comes from Phillips "Mechanics of Flight" Appendix A
-    data = np.genfromtxt("Standard_Atmosphere_SI_table.csv",dtype='float',delimiter=',',skip_header=1)
+    data = np.genfromtxt("./Standard_Atmosphere/Standard_Atmosphere_SI_table.csv",dtype='float',delimiter=',',skip_header=1)
     
     geo = np.interp(h,data[:,0],data[:,1])
     temp = np.interp(h,data[:,0],data[:,2])
