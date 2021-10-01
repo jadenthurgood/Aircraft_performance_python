@@ -2,8 +2,15 @@ import numpy as np
 import os
 
 def interp(h):
-    """ This function takes a height in ft and returns the geopotential height in ft,
-    the temperature (R), Pressure (lbf/ft^2), Density (slugs/ft^3) and Speed of Sound (ft/s) """
+    """This function takes a height in ft and returns the geopotential height in ft,
+    the temperature (R), Pressure (lbf/ft^2), Density (slugs/ft^3) and Speed of Sound (ft/s)
+
+    Args:
+        h (float): Altitude (MSL)
+
+    Returns:
+        tuple: (geopotential height, temperature, pressure, density, speed of sound)
+    """
     
     #import the English Standard Atmosphere table of data from the CSV file
     #data comes from Phillips "Mechanics of Flight" Appendix A
