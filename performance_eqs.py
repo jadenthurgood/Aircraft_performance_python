@@ -517,3 +517,20 @@ def stall_limited_bank(W,rho,V,Sw, CL_max):
     stall_limited_phi = np.arccos(W/(0.5*rho*V*V*Sw*CL_max))
     
     return stall_limited_phi
+
+#Load Factor Definition
+def load_factor(rho,V,Sw,CL,W):
+    """Computes the load factor of the aircraft.
+
+    Args:
+        rho (float): Air density
+        V (float): Airspeed
+        Sw (float): Area of the main wing
+        CL (float): Lift coefficient during the maneuver
+        W (float): Weight of the aircraft
+    """
+    #Eq. 3.9.13 from Warren Phillips Mechanics of Flight
+    num = 0.5*rho*V*V*Sw*CL
+    n = num/W #load factor
+
+    return n
