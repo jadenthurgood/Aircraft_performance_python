@@ -534,3 +534,33 @@ def load_factor(rho,V,Sw,CL,W):
     n = num/W #load factor
 
     return n
+
+#Load Factor for a nearly level turn
+def load_factor_level_turn(phi):
+    """Approximates the load factor of an aircraft in a nearly level steady coordinated turn. usses the small climb angle approximation.
+
+    Args:
+        phi (float): Bank angle in radians
+    """
+    #Eq. 3.9.14 from Warren Phillips Mechanics of Flight
+    n = 1/(np.cos(phi))
+    
+    return n
+
+#Load limited bank angle
+def load_limited_bank(W,W_max,n_pll):
+    """Computes the load limited bank angle for a coordinated turn (ie. maximum bank anle that can be used without exceeding structural limits). 
+    Assumes small climb angle approximation.
+
+    Args:
+        W (float): Weight of the Aircraft
+        W_max (float): Max gross weight of the aircraft
+        n_pll (float): positive load limit (defined by the maximum structural lift force/maximum gross weight.)
+
+    Returns:
+        float: load limited bank angle in radians
+    """
+    #Eq. 3.9.17 from Warren Phillips Mechanics of Flight
+    load_limited_phi = np.arccos((W/(n_pll*W_max)))
+    
+    return load_limited_phi
