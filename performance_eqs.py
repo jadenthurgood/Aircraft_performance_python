@@ -429,9 +429,9 @@ def velocity_stall(CL_max,W,Sw,rho):
 
 #----------------------Turns and Loads-------------------------
 
-#Turning radius 
-def turn_radius(V,phi,g,gamma=0,small_climb_angle=True):
-    """Computes the turning radius of an aircraft from eq. 3.9.6 of Phillips "Mechanics of Flight"
+#Turning radius from the bank angle and airspeed.
+def turn_radius_from_bank_angle(V,phi,g,gamma=0,small_climb_angle=True):
+    """Computes the turning radius of an aircraft in a level coordinated turn. From eq. 3.9.6 of Phillips "Mechanics of Flight"
 
     Args:
         V (float): airspeed
@@ -455,9 +455,39 @@ def turn_radius(V,phi,g,gamma=0,small_climb_angle=True):
 
     return R
 
+#Turning radius from the load factor and airspeed.
+def turn_radius_from_load_factor(V,load,g,gamma=0,small_climb_angle=True):
+    """Computes the turning radius of an aircraft in a level coordinated turn. From eq. 3.9.19 and 3.9.20 of Phillips "Mechanics of Flight"
+    Not valid for climbing or descending turns.
+
+    Args:
+        V (float): airspeed
+        load (float): load factor (g's, defined by: Lift/Weight)
+        g (float): acceleration due to gravity
+        gamma (float): climb angle in radians (measured from the local horizontal to the flight path). Defaults to 0. Only used if small_climb_angle is set to "False"
+        small_climb_angle (bool): Defaults to "True". When "True", assumes small climb angle approximation. When "False", accounts for climb angles.
+    """
+    #Equation 3.9.19 and 3.9.20 from Warren Phillips "Mechanics of Flight"
+    #check if using small climb angle approximation
+    if small_climb_angle:
+        if load == 1: #Check to make sure you are not dividing by zero
+            raise ValueError("Level turning radius equation is undefined for a value of 1 for the load factor.")
+        
+        else:
+            R = (V*V)/(g*np.sqrt(load*load - 1))
+   
+    else: #Use gamma if not using small climb angle approximation
+        if (load == 1 and gamma == 0): #check to make sure you are not dividing by zero
+            raise ValueError("Level turning radius equation is undefined for a value of 1 for the load factor and zero climb angle.")
+
+        else:
+            R = ((V*V*(np.cos(gamma)**2))/(g*np.sqrt(load*load - (np.cos(gamma)**2))))
+
+    return R
+
 ##Turning Climb velocity (rate of climb in a turn) computed using Thrust available and other aircraft properties
 def turning_climb_rate_arspd(Ta,W,V,CD0,CD0_L,rho,Sw,e,Ra,phi,gamma=0,small_climb_angle=True):
-    """Computes the turning climb rate based on the thrust available assuming small thrust angles.
+    """Computes the turning climb rate (rate of climb in a turn) based on the thrust available assuming small thrust angles.
     
     Args:
         Ta (float): Oswald efficiency factor (0-1)
@@ -517,3 +547,4 @@ def stall_limited_bank(W,rho,V,Sw, CL_max):
     stall_limited_phi = np.arccos(W/(0.5*rho*V*V*Sw*CL_max))
     
     return stall_limited_phi
+
