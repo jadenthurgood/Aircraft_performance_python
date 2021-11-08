@@ -548,8 +548,6 @@ def stall_limited_bank(W,rho,V,Sw, CL_max):
     
     return stall_limited_phi
 
-<<<<<<< HEAD
-=======
 #Load Factor Definition
 def load_factor(rho,V,Sw,CL,W):
     """Computes the load factor of the aircraft.
@@ -596,4 +594,3 @@ def load_limited_bank(W,W_max,n_pll):
     load_limited_phi = np.arccos((W/(n_pll*W_max)))
     
     return load_limited_phi
->>>>>>> 32117982b6062e9e786e4057f46826fa4bc8e400
