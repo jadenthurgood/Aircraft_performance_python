@@ -594,3 +594,63 @@ def load_limited_bank(W,W_max,n_pll):
     load_limited_phi = np.arccos((W/(n_pll*W_max)))
     
     return load_limited_phi
+ 
+#Stall-Limited Load Factor maximum
+def max_load_factor_stall_limited(rho,V,Sw,CL_max,W):
+    """Computes the maximum possible load factor that is limited by stall. Generally relevant at lower airspeeds.
+
+    Args:
+        rho (float): Air density
+        V (float): Airspeed
+        Sw (float): Area of the main wing
+        CL_max (float): Maximum lift coefficient of the aircraft
+        W (float): Weight of the aircraft
+    """
+    #Eq. 3.9.21 from Warren Phillips Mechanics of Flight
+    n_max = load_factor(rho,V,Sw,CL_max,W)
+
+    return n_max
+
+#Stall-Limited Load Factor minimum
+def min_load_factor_stall_limited(rho,V,Sw,CL_min,W):
+    """Computes the minimum possible load factor that is limited by stall. Generally relevant at lower airspeeds.
+
+    Args:
+        rho (float): Air density
+        V (float): Airspeed
+        Sw (float): Area of the main wing
+        CL_min (float): Minimum lif coefficient of the aircraft
+        W (float): Weight of the aircraft
+    """
+    #Eq. 3.9.22 from Warren Phillips Mechanics of Flight
+    n_min = load_factor(rho,V,Sw,CL_min,W)
+
+    return n_min
+
+#Structural Load Factor Maximum
+def max_load_factor_structure_limited(W,W_max,n_pll):
+    """Computes the maximum load factor that is limited by the structural constraints of the aircraft. 
+
+    Args:
+        W (float): Weight of the Aircraft
+        W_max (float): Max gross weight of the aircraft
+        n_pll (float): positive load limit (defined by the maximum structural lift force/maximum gross weight.)
+    """
+    #Eq. 3.9.23 from Warren Phillips Mechanics of Flight
+    n_max_structure = n_pll*(W_max/W)
+    
+    return n_max_structure
+
+#Structural Load Factor Minimum
+def min_load_factor_structure_limited(W,W_max,n_nll):
+    """Computes the minimum load factor that is limited by the structural constraints of the aircraft. 
+
+    Args:
+        W (float): Weight of the Aircraft
+        W_max (float): Max gross weight of the aircraft
+        n_nll (float): negative load limit (defined by the maximum negative structural lift force/maximum gross weight.)
+    """
+    #Eq. 3.9.23 from Warren Phillips Mechanics of Flight
+    n_max_structure = n_nll*(W_max/W)
+    
+    return n_max_structure
