@@ -426,6 +426,27 @@ def velocity_stall(CL_max,W,Sw,rho):
     #Equation 3.8.3 from Warren Phillips "Mechanics of Flight"
     return (np.sqrt(2/CL_max)*np.sqrt((W/Sw)/rho))
 
+#Maneuvering Speed
+def velocity_maneuver(CL_max,W_max,Sw,rho,n_pll):
+    """Computes the maneuvering speed of the aircraft (the airspeed at which the airplane can perform the tightest and fastest
+    maneuvers without stalling the wing or risking structural damage).
+
+    Args:
+        CL_max (float): Maximum possible lift coefficient of the aircraft
+        W_max (float): Max gross weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): Air density
+        n_pll (float): positive load limit (defined by the maximum structural lift force/maximum gross weight.)
+
+    Returns:
+        [type]: [description]
+    """
+    #Equation 3.9.25 from Warren Phillips "Mechanics of Flight"
+    #Compute the stall speed at maximum gross weight first
+    V_smgw = velocity_stall(CL_max,W_max,Sw,rho)
+    V_maneuver = np.sqrt(n_pll)*V_smgw
+
+    return V_maneuver
 
 #----------------------Turns and Loads-------------------------
 
@@ -654,3 +675,5 @@ def min_load_factor_structure_limited(W,W_max,n_nll):
     n_max_structure = n_nll*(W_max/W)
     
     return n_max_structure
+
+print(velocity_maneuver(2.25,2200,25.5,0.0023769,4.5))
