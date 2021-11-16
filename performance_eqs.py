@@ -162,7 +162,6 @@ def power_req_min(CD0,CD0_L,e,Ra,W,Sw,rho):
 
 #----------------------Velocities-------------------------
 
-####This function needs tested
 #Climb velocity (rate of climb) computed using power available and power required
 def climb_rate_power(pwr_avail,pwr_req,W):
     """Computes the climb rate based on the excess power available over the power required for steady level flight. 
@@ -429,7 +428,8 @@ def velocity_stall(CL_max,W,Sw,rho):
 #Maneuvering Speed
 def velocity_maneuver(CL_max,W_max,Sw,rho,n_pll):
     """Computes the maneuvering speed of the aircraft (the airspeed at which the airplane can perform the tightest and fastest
-    maneuvers without stalling the wing or risking structural damage).
+    maneuvers without stalling the wing or risking structural damage). Interestingly enough, maneuvering speed for an aircraft
+    is also the speed for the minimum turn radius and the speed for the maximum rate of turn.
 
     Args:
         CL_max (float): Maximum possible lift coefficient of the aircraft
@@ -676,4 +676,4 @@ def min_load_factor_structure_limited(W,W_max,n_nll):
     
     return n_max_structure
 
-print(velocity_maneuver(2.25,2200,25.5,0.0023769,4.5))
+#----------------------Takeoff and Landing Performance-------------------------
