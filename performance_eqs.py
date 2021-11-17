@@ -677,3 +677,14 @@ def min_load_factor_structure_limited(W,W_max,n_nll):
     return n_max_structure
 
 #----------------------Takeoff and Landing Performance-------------------------
+#You need to program Eq. 3.10.20 V_LO
+#You need to program Eq. 3.10.12 but I think this will require a re-work of the equations
+## as it stands Eq. 3.10.12 does not account for the air density effects on thrust, just lift and drag.
+## I think I can rework the Eqs. 3.10.7 - 3.10.11 to account for the density in 3.10.7. Then code up an 
+## algorithm that would discretize the starting velocity and lift off velocity into multiple smaller dV's,
+## perform the "integration" and compare his results with Ex. 3.10.2
+#You would also need to program 3.10.25. You may also need to figure out how to rework Eqs. 3.10.21 - 3.10.24
+## so they can be used in the algorithms
+#Finally, I think you can also program Eq. 3.10.39 that is a less computationally expensive first approx with no wind
+
+#You may need to create different branches in Git to try some functionality and decide which is more useful.
