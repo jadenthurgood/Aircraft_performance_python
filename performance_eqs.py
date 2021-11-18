@@ -677,7 +677,23 @@ def min_load_factor_structure_limited(W,W_max,n_nll):
     return n_max_structure
 
 #----------------------Takeoff and Landing Performance-------------------------
-#You need to program Eq. 3.10.20 V_LO
+
+#Lift Off Speed
+def velocity_lift_off(CL_max_config,W,Sw,rho):
+    """Computes the liftoff speed of the aircraft. Defined as 1.1 times the stall speed of an airplane
+
+    Args:
+        CL_max_config (float): Maximum lift coefficient of the aircraft for take-off configuration
+        W (float): Weight of the Aircraft
+        Sw (float): Area of the main wing
+        rho (float): Air density
+    """
+
+    #Eq. 3.10.20 from Warren Phillips Mechanics of Flight
+    V_LO = 1.1*velocity_stall(CL_max_config,W,Sw,rho)
+
+    return V_LO
+
 #You need to program Eq. 3.10.12 but I think this will require a re-work of the equations
 ## as it stands Eq. 3.10.12 does not account for the air density effects on thrust, just lift and drag.
 ## I think I can rework the Eqs. 3.10.7 - 3.10.11 to account for the density in 3.10.7. Then code up an 
