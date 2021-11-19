@@ -699,8 +699,79 @@ def velocity_lift_off(CL_max_config,W,Sw,rho):
 ## I think I can rework the Eqs. 3.10.7 - 3.10.11 to account for the density in 3.10.7. Then code up an 
 ## algorithm that would discretize the starting velocity and lift off velocity into multiple smaller dV's,
 ## perform the "integration" and compare his results with Ex. 3.10.2
+
+#Discrete distance calculator
+def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_hw, W, u_r, Sw, CL, CD, rho,\
+    rho_0=0.0023769, a=1, g=32.17405, T_ref_vel=[]):
+    """Computes the acceleration or deceleration distance of an aircraft given a starting and ending velocity. The function
+    follows a modified version of Eqs. 3.10.8 - 3.10.19 in Warren Phillips "Mechanics of Flight". The modifications can 
+    be found in the document listed in "Useful_reference_images". The doc is called "3.10 equations reworks.pdf".
+
+    Args:
+        tau (float): Throttle percentage. Range: 0 - 1. Where zero is 0 % throttle and one is 100% throttle
+        T0 (float): First experimentally determined coefficient of thrust in the re-worked eq. (3.10.7).
+        Can be a single value, or a list of values for a given range of velocities.
+        T1 (float): Second experimentally determined coefficient of thrust in the re-worked eq. (3.10.7).
+        Can be a single value, or a list of values for a given range of velocities.
+        T2 (float): Third experimentally determined coefficient of thrust in the re-worked eq. (3.10.7).
+        Can be a single value, or a list of values for a given range of velocities.
+        V_start (float]): Starting velocity for distance calculation
+        V_end (float): Final velocity for distance calculation
+        V_hw (float): Velocity of the direct headwind component of wind
+        W (float): Weight of the aircraft
+        u_r (float): Coefficient of friction for rolling tires
+        Sw (float): Area of the main wing
+        CL (float): Lift coefficient for the configuration of the aircraft during acceleration or deceleration
+        CD (float): Drag coefficient for the configuration of the aircraft during acceleration or deceleration
+        rho (float): Air density
+        rho_0 (float, optional): Reference air density. Defaults to 0.0023769 for English units.
+        a (float): Experimentally determined exponent for density ratio (rho/rho_0). Assume 1 if unknown.
+        g (float, optional): Acceleration due to gravity. Defaults to 32.17405 for English units
+        T_ref_vel (list of float, optional): Thrust reference velocities to be used for interpolation if a list of values
+        is given for T0, T1, and T2. All four lists must be the same dimension. Defaults to an empty list.
+
+    Returns:
+        float: The acceleration or deceleration distance for a given start and stop velocity.
+    """
+    #Notes: You still need to discretize the start and end velocity and create a summing loop aor keep track of the i'th 
+    ##iteration. 
+    ##You also need to think about relative velocities if there is a headwind. What does that mean for your start and en
+    ##velocities?
+    ##Good News! Your function as it stands matches what Phillips has in his Ex. 3.10.2
+
+    #Fist thing you need to do is check if T0, T1, T2 are lists.
+    ##If the are then you need to check if T0, T1, T2, and T_ref_vel are all the same length for interpolation
+    placeholder = T_ref_vel
+    
+    #If T0, T1, T2 are not lists
+    #Following Equations for 3.10.12 from Warren Phillips "Mechanics of Flight"
+    #Compute K0-K2
+    K0 = ((tau*T0*(rho/rho_0)**a)/W) - u_r
+    K1 = (tau*T1*(rho/rho_0)**a)/W
+    K2 = ((tau*T2*(rho/rho_0)**a)/W) + ((rho*Sw)/(2*W))*(CL*u_r - CD)
+
+    #Compute KR and f values
+    KR = 4*K0*K2 - K1*K1
+    sr_nKR = np.sqrt(-KR)
+    f1 = K0 + K1*V_start + K2*V_start*V_start
+    f2 = K0 + K1*V_end + K2*V_end*V_end
+    f1_p = K1 + 2*K2*V_start
+    f2_p = K1 + 2*K2*V_end
+
+    #Compute the KW and KT values
+    num = (f2_p - sr_nKR)*(f1_p + sr_nKR)
+    den = (f2_p + sr_nKR)*(f1_p - sr_nKR)
+    KW = (1/sr_nKR)*np.log(num/den)
+    KT = (1/(2*K2))*np.log(f2/f1) - ((K1*KW)/(2*K2))
+
+    #Compute the distance
+    delta_s = ((KT - V_hw*KW)/g)
+
+    s = delta_s
+    return s
 #You would also need to program 3.10.25. You may also need to figure out how to rework Eqs. 3.10.21 - 3.10.24
 ## so they can be used in the algorithms
 #Finally, I think you can also program Eq. 3.10.39 that is a less computationally expensive first approx with no wind
 
 #You may need to create different branches in Git to try some functionality and decide which is more useful.
+print(discrete_accel_decel_distance_calculator(1,1200,-4,0,29.33,104.44,29.33,2700,0.04,180,0.3485,0.042969,0.0023769))
