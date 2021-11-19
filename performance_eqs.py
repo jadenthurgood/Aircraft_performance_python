@@ -772,6 +772,3 @@ def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_
 #You would also need to program 3.10.25. You may also need to figure out how to rework Eqs. 3.10.21 - 3.10.24
 ## so they can be used in the algorithms
 #Finally, I think you can also program Eq. 3.10.39 that is a less computationally expensive first approx with no wind
-
-#You may need to create different branches in Git to try some functionality and decide which is more useful.
-print(discrete_accel_decel_distance_calculator(1,1200,-4,0,29.33,104.44,29.33,2700,0.04,180,0.3485,0.042969,0.0023769))
