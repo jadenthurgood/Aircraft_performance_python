@@ -701,7 +701,7 @@ def velocity_lift_off(CL_max_config,W,Sw,rho):
 ## perform the "integration" and compare his results with Ex. 3.10.2
 
 #Discrete distance calculator
-def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_hw, W, u_r, Sw, CL, CD, rho,\
+def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_hw, n, W, u_r, Sw, CL, CD, rho,\
     rho_0=0.0023769, a=1, g=32.17405, T_ref_vel=[]):
     """Computes the acceleration or deceleration distance of an aircraft given a starting and ending velocity. The function
     follows a modified version of Eqs. 3.10.8 - 3.10.19 in Warren Phillips "Mechanics of Flight". The modifications can 
@@ -715,9 +715,12 @@ def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_
         Can be a single value, or a list of values for a given range of velocities.
         T2 (float): Third experimentally determined coefficient of thrust in the re-worked eq. (3.10.7).
         Can be a single value, or a list of values for a given range of velocities.
-        V_start (float]): Starting velocity for distance calculation
-        V_end (float): Final velocity for distance calculation
-        V_hw (float): Velocity of the direct headwind component of wind
+        V_start (float): Starting velocity for distance calculation. (If accelerating, this is the desired starting ground speed
+            If decelerating, this is the desired starting airspeed, preferably just above stall airspeed if you are landing)
+        V_end (float): Final velocity desired. (If accelerating, this is the desired ending airspeed, i.e. rotation airspeed. 
+            If decelerating, this is the desired ending ground speed) 
+        V_hw (float): Velocity of the direct headwind component of wind. (Negative if tailwind)
+        n (int): number of segments to break the velocity range into for the integration. 
         W (float): Weight of the aircraft
         u_r (float): Coefficient of friction for rolling tires
         Sw (float): Area of the main wing
@@ -733,42 +736,95 @@ def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_
     Returns:
         float: The acceleration or deceleration distance for a given start and stop velocity.
     """
-    #Notes: You still need to discretize the start and end velocity and create a summing loop aor keep track of the i'th 
-    ##iteration. 
-    ##You also need to think about relative velocities if there is a headwind. What does that mean for your start and en
-    ##velocities?
-    ##Good News! Your function as it stands matches what Phillips has in his Ex. 3.10.2
+    # The acceleration deceleration distance equaion cares about groundspeed for Newtons second law. But really all it cares
+    #about is the delta in velocity between the start and ending groundspeed. But the delta in ground speed will also be
+    #the same delta in airspeed. So since you have given the user stipulations on what speed to enter for start and end 
+    #velocities based on if they are accelerating or decelerating, you still need to keep track of which velocities you are using
+    #to get the accurate delta in velocity. However, some of the K0, K1 and K2 coefficients depend on the airspeed. So you need
+    #to preserve the accurate airspeeds during the accel or decel distance.
 
-    #Fist thing you need to do is check if T0, T1, T2 are lists.
-    ##If the are then you need to check if T0, T1, T2, and T_ref_vel are all the same length for interpolation
-    placeholder = T_ref_vel
+    #Check if the user is accelerating or decelerating
+    if V_start < V_end: #accelerating
+
+        #Add the headwind to the starting user input ground speed to get the starting airspeed
+        V_start_air = V_start + V_hw
+        V_end_air = V_end
+
+    elif V_start > V_end: #decelerating
+
+        #Add the headwind to the ending user input ground speed to get the ending airspeed
+        V_end_air = V_end + V_hw
+        V_start_air = V_start
     
-    #If T0, T1, T2 are not lists
-    #Following Equations for 3.10.12 from Warren Phillips "Mechanics of Flight"
-    #Compute K0-K2
-    K0 = ((tau*T0*(rho/rho_0)**a)/W) - u_r
-    K1 = (tau*T1*(rho/rho_0)**a)/W
-    K2 = ((tau*T2*(rho/rho_0)**a)/W) + ((rho*Sw)/(2*W))*(CL*u_r - CD)
+    #Discretize the velocity segments base on the user input
+    V_array = np.linspace(V_start_air,V_end_air,n)
 
-    #Compute KR and f values
-    KR = 4*K0*K2 - K1*K1
-    sr_nKR = np.sqrt(-KR)
-    f1 = K0 + K1*V_start + K2*V_start*V_start
-    f2 = K0 + K1*V_end + K2*V_end*V_end
-    f1_p = K1 + 2*K2*V_start
-    f2_p = K1 + 2*K2*V_end
+    #Check if T0,T1,T2 are lists
+    if type(T0) ==list:
+        #Check to make sure that T0, T1, T2, and T_ref_vel are all the same length for interpolation
+        if len(T0) != len(T1) or len(T1) != len(T2) or len(T2) != len(T_ref_vel):
+            raise ValueError("The length of T0, T1, T2, and T_rel_vel must be the same for interpolation purposes.")
+        else:
+            #Tell the program it will be interpolating the thrust parameters based on velocity during the integration.
+            thrust_interpolated = True
+    else: #Tell the program it will not be interpolating thrust paramters
+        thrust_interpolated = False
+    #initialize the total distance in the integral to 0
+    total_distance = 0
 
-    #Compute the KW and KT values
-    num = (f2_p - sr_nKR)*(f1_p + sr_nKR)
-    den = (f2_p + sr_nKR)*(f1_p - sr_nKR)
-    KW = (1/sr_nKR)*np.log(num/den)
-    KT = (1/(2*K2))*np.log(f2/f1) - ((K1*KW)/(2*K2))
+    #iterate over the sections of velocity and sum up the distance traveled during acceleration
+    for i in range(n-1):
+        
+        if thrust_interpolated == True:
+            #Find the Thrust paramter values using interpolation from the data set provided. The interpolation
+            #uses the V_array[i] velocity for the interpolation. The difference between these small changes in 
+            #velocity should be small enough to not require the average between the i and ith velocity in V_array
+            T0_temp = np.interp(V_array[i],T_ref_vel,T0)
+            T1_temp = np.interp(V_array[i],T_ref_vel,T1)
+            T2_temp = np.interp(V_array[i],T_ref_vel,T2)
 
-    #Compute the distance
-    delta_s = ((KT - V_hw*KW)/g)
+        else: #no need to interpolate the values
+            T0_temp = T0
+            T1_temp = T1
+            T2_temp = T2
+            
+        #Following your re-worked Equations for 3.10.12 from Warren Phillips "Mechanics of Flight". Can be found in the pdf
+        #Compute K0-K2
+        K0 = ((tau*T0_temp*(rho/rho_0)**a)/W) - u_r
+        K1 = (tau*T1_temp*(rho/rho_0)**a)/W
+        K2 = ((tau*T2_temp*(rho/rho_0)**a)/W) + ((rho*Sw)/(2*W))*(CL*u_r - CD)
 
-    s = delta_s
+        #Compute KR and f values
+        KR = 4*K0*K2 - K1*K1
+        sr_nKR = np.sqrt(-KR)
+        f1 = K0 + K1*V_array[i] + K2*V_array[i]*V_array[i]
+        f2 = K0 + K1*V_array[i+1] + K2*V_array[i+1]*V_array[i+1]
+        f1_p = K1 + 2*K2*V_array[i]
+        f2_p = K1 + 2*K2*V_array[i+1]
+
+        #Compute the KW and KT values
+        num = (f2_p - sr_nKR)*(f1_p + sr_nKR)
+        den = (f2_p + sr_nKR)*(f1_p - sr_nKR)
+        KW = (1/sr_nKR)*np.log(num/den)
+        KT = (1/(2*K2))*np.log(f2/f1) - ((K1*KW)/(2*K2))
+
+        #Compute the distance
+        delta_s = ((KT - V_hw*KW)/g)
+
+        #Add to the running total of the acceleration distance
+        total_distance = total_distance + delta_s
+
+    s = total_distance
     return s
+
 #You would also need to program 3.10.25. You may also need to figure out how to rework Eqs. 3.10.21 - 3.10.24
 ## so they can be used in the algorithms
 #Finally, I think you can also program Eq. 3.10.39 that is a less computationally expensive first approx with no wind
+
+
+#Test Input
+print(discrete_accel_decel_distance_calculator(1,1200,-4,0,104.44,0,29.33,20,2700,0.04,180,0.3485,0.042969,\
+    0.0023769))
+
+print(discrete_accel_decel_distance_calculator(1,[1200,1200,1200],[-4,-4,-4],[0,0,0],104.44,0,29.33,20,2700,0.04,180,0.3485,0.042969,\
+    0.0023769,T_ref_vel=[25,68,109]))    
