@@ -448,6 +448,21 @@ def velocity_maneuver(CL_max,W_max,Sw,rho,n_pll):
 
     return V_maneuver
 
+#Lift-Off Airspeed
+def velocity_Lift_Off(CL_max,W,Sw,rho):
+    """Computes the lift-off velocity of the aircraft. Defined as 1.1 times the stall speed.
+
+    Args:
+        CL_max (float): Maximum possible lift coefficient of the aircraft
+        W (float): Weight of the aircraft
+        Sw (float): Area of the main wing
+        rho (float): Air density
+    """
+    #Equation 3.10.20 from Warren Phillips "Mechanics of Flight"
+    V_LO = 1.1*velocity_stall(CL_max,W,Sw,rho)
+
+    return V_LO
+
 #----------------------Turns and Loads-------------------------
 
 #Turning radius from the bank angle and airspeed.
@@ -702,7 +717,7 @@ def velocity_lift_off(CL_max_config,W,Sw,rho):
 
 #Discrete distance calculator
 def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_hw, n, W, u_r, Sw, CL, CD, rho,\
-    rho_0=0.0023769, a=1, g=32.17405, T_ref_vel=[]):
+    rho_0=0.0023769, a=1.0, g=32.17405, T_ref_vel=[]):
     """Computes the acceleration or deceleration distance of an aircraft given a starting and ending velocity. The function
     follows a modified version of Eqs. 3.10.8 - 3.10.19 in Warren Phillips "Mechanics of Flight". The modifications can 
     be found in the document listed in "Useful_reference_images". The doc is called "3.10 equations reworks.pdf".
@@ -802,12 +817,32 @@ def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_
         f1_p = K1 + 2*K2*V_array[i]
         f2_p = K1 + 2*K2*V_array[i+1]
 
-        #Compute the KW and KT values
-        num = (f2_p - sr_nKR)*(f1_p + sr_nKR)
-        den = (f2_p + sr_nKR)*(f1_p - sr_nKR)
-        KW = (1/sr_nKR)*np.log(num/den)
-        KT = (1/(2*K2))*np.log(f2/f1) - ((K1*KW)/(2*K2))
+        #Compute KW value
+        if K2 == 0:
+            if K1 == 0:
+                KW = (V_array[i+1]- V_array[i])/K0
+            else:
+                KW = (1/K1)*np.log(f2/f1)
+        elif KR < 0:
+            num = (f2_p - sr_nKR)*(f1_p + sr_nKR)
+            den = (f2_p + sr_nKR)*(f1_p - sr_nKR)
+            KW = (1/sr_nKR)*np.log(num/den)
+        elif KR == 0:
+            KW = (2/f1_p) - (2/f2_p)
+        elif KR > 0:
+            KW = (2/KR)*(np.arctan(f2_p/np.sqrt(KR)) - np.arctan(f1_p/np.sqrt(KR)))
 
+        #Compute KT value
+        if K2 == 0:
+            if K1 == 0:
+                KT = (V_array[i+1]*V_array[i+1] - V_array[i]*V_array[i])/(2*K0)
+            else:
+                term1 = (K0/(K1*K1))*np.log(f1/f2)
+                term2 = (V_array[i+1] - V_array[i])/K1
+                KT = term1 + term2
+        else:
+            KT = (1/(2*K2))*np.log(f2/f1) - ((K1*KW)/(2*K2))
+        
         #Compute the distance
         delta_s = ((KT - V_hw*KW)/g)
 
@@ -819,12 +854,79 @@ def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_
 
 #You would also need to program 3.10.25. You may also need to figure out how to rework Eqs. 3.10.21 - 3.10.24
 ## so they can be used in the algorithms
+
+#Single Step Acceleration run calculation with no wind
+def accel_distance_calculator_simple_thrust(tau, T_S, T_LO, W, u_r, Sw, CL, CL_max, CD, rho, rho_0=0.0023769, \
+    a=1.0, g=32.17405):
+    """Computes an approximation for the acceleration distance over the full accerleration as a single iteration. 
+    Assumes no wind and that the starting airspeed is 0. Only used for acceleration distances.
+
+    Args:
+        tau (float): Throttle percentage. Range: 0 - 1. Where zero is 0 % throttle and one is 100% throttle
+        T_S (float): Static thrust of the powerplant. (Thrust at 0 airspeed)
+        T_LO (float): Thrust at lift-off airspeed. (Can be calculated using the "velocity_Lift_Off" fuction)
+        W (float): Weight of the aircraft
+        u_r (float): Coefficient of friction for rolling tires
+        Sw (float): Area of the main wing
+        CL (float): Lift coefficient for the configuration of the aircraft during acceleration or deceleration
+        CL_max (float): Maximum lift coefficient for the aircraft in take-off configuration.
+        CD (float): Drag coefficient for the configuration of the aircraft during acceleration or deceleration
+        rho (float): Air density
+        rho_0 (float, optional): Reference air density. Defaults to 0.0023769 for English units.
+        a (float): Experimentally determined exponent for density ratio (rho/rho_0). Assume 1 if unknown.
+        g (float, optional): Acceleration due to gravity. Defaults to 32.17405 for English units
+    """
+    #Get the lift off velocity
+    V_LO = velocity_Lift_Off(CL_max,W,Sw,rho)
+
+    #Calculate the average thrust
+    T_bar = (T_S + T_LO)/2
+
+    #Calculate K0, K1, K2, and KR using the reworked equations from the pdf 3.10 equation reworks.pdf
+    K0 = ((tau*T_S*(rho/rho_0)**a)/W) - u_r
+    K1 = (tau*(rho/rho_0)**a)*((6*T_bar - 4*T_S - 2*T_LO)/(W*V_LO))
+    K2 = (tau*(rho/rho_0)**a)*((3*T_S + 3*T_LO - 6*T_bar)/(W*V_LO*V_LO)) + ((rho*Sw)/(2*W))*(CL*u_r - CD)
+    KR = 4*K0*K2 - K1*K1
+    sr_nKR = np.sqrt(-KR)
+
+    #Calculate fs, flo, fs_p, and flo_p
+    fs = K0
+    flo = K0 + K1*V_LO + K2*V_LO*V_LO
+    fs_p = K1
+    flo_p = K1 + 2*K2*V_LO
+
+    #Calculate KW
+    if KR < 0:
+        num = (flo_p - sr_nKR)*(fs_p + sr_nKR)
+        den = (flo_p + sr_nKR)*(fs_p - sr_nKR)
+        KW = (1/sr_nKR)*np.log(num/den)
+    
+    elif KR == 0:
+        KW = (2/fs_p) - (2/flo_p)
+    
+    elif KR > 0:
+        KW = (2/KR)*(np.arctan(flo_p/np.sqrt(KR)) - np.arctan(fs_p/np.sqrt(KR)))
+
+    #Calculate KT
+    if K2 == 0:
+        if K1 == 0:
+            KT = (V_LO*V_LO)/(2*K0)
+        else:
+            term1 = (K0/(K1*K1))*np.log(fs/flo)
+            term2 = V_LO/K1
+            KT = term1 + term2
+    else:
+        KT = (1/(2*K2))*np.log(flo/fs) - ((K1*KW)/(2*K2))
+
+    #Calculate the acceleration distance
+    s = KT/g
+
+    return s
+
 #Finally, I think you can also program Eq. 3.10.39 that is a less computationally expensive first approx with no wind
 
 
 #Test Input
-print(discrete_accel_decel_distance_calculator(1,1200,-4,0,104.44,0,29.33,20,2700,0.04,180,0.3485,0.042969,\
-    0.0023769))
+print(accel_distance_calculator_simple_thrust(1,1200,782,2700,0.04,180,0.3485,1.4,0.042969,0.0023769))
 
-print(discrete_accel_decel_distance_calculator(1,[1200,1200,1200],[-4,-4,-4],[0,0,0],104.44,0,29.33,20,2700,0.04,180,0.3485,0.042969,\
-    0.0023769,T_ref_vel=[25,68,109]))    
+
