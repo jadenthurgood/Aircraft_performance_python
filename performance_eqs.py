@@ -852,9 +852,6 @@ def discrete_accel_decel_distance_calculator(tau, T0, T1, T2, V_start, V_end, V_
     s = total_distance
     return s
 
-#You would also need to program 3.10.25. You may also need to figure out how to rework Eqs. 3.10.21 - 3.10.24
-## so they can be used in the algorithms
-
 #Single Step Acceleration run calculation with no wind
 def accel_distance_calculator_simple_thrust(tau, T_S, T_LO, W, u_r, Sw, CL, CL_max, CD, rho, rho_0=0.0023769, \
     a=1.0, g=32.17405):
@@ -876,6 +873,9 @@ def accel_distance_calculator_simple_thrust(tau, T_S, T_LO, W, u_r, Sw, CL, CL_m
         a (float): Experimentally determined exponent for density ratio (rho/rho_0). Assume 1 if unknown.
         g (float, optional): Acceleration due to gravity. Defaults to 32.17405 for English units
     """
+    #Compute the acceleration distance in the critical case of no wind in a single step from 3.10.25. Function uses
+    #your re-worked equations from 3.10 equation reworks.pdf
+
     #Get the lift off velocity
     V_LO = velocity_Lift_Off(CL_max,W,Sw,rho)
 
@@ -919,14 +919,29 @@ def accel_distance_calculator_simple_thrust(tau, T_S, T_LO, W, u_r, Sw, CL, CL_m
         KT = (1/(2*K2))*np.log(flo/fs) - ((K1*KW)/(2*K2))
 
     #Calculate the acceleration distance
-    s = KT/g
+    s_accel = KT/g
 
-    return s
+    return s_accel
+
+#Rotational distance from 3.10.36
+def rotation_distance_calc(V_LO,V_hw,t_r):
+    """Calculates the distance covered during rotation of an aircraft to take off attitude.
+
+    Args:
+        V_LO (float): Lift off velocity (rotation speed). Can be computed using "velocity_Lift_Off" function.
+        V_hw (float): Headwind (positive assumes headwind, negative assumes tailwind)
+        t_r (float): assumed rotation time in seconds. (Typical rotation times range from 1-3 seconds varying with the aircraft)
+    """
+    #Eq. 3.10.36 from Warren Phillips Mechanics of Flight
+    s_rot = (V_LO - V_hw)*t_r
+    
+    return s_rot
+
 
 #Finally, I think you can also program Eq. 3.10.39 that is a less computationally expensive first approx with no wind
 
 
 #Test Input
-print(accel_distance_calculator_simple_thrust(1,1200,782,2700,0.04,180,0.3485,1.4,0.042969,0.0023769))
+print(327 + rotation_distance_calc(104.44,29.33,1))
 
 
