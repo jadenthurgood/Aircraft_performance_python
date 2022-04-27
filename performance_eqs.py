@@ -448,21 +448,6 @@ def velocity_maneuver(CL_max,W_max,Sw,rho,n_pll):
 
     return V_maneuver
 
-#Lift-Off Airspeed
-def velocity_Lift_Off(CL_max,W,Sw,rho):
-    """Computes the lift-off velocity of the aircraft. Defined as 1.1 times the stall speed.
-
-    Args:
-        CL_max (float): Maximum possible lift coefficient of the aircraft
-        W (float): Weight of the aircraft
-        Sw (float): Area of the main wing
-        rho (float): Air density
-    """
-    #Equation 3.10.20 from Warren Phillips "Mechanics of Flight"
-    V_LO = 1.1*velocity_stall(CL_max,W,Sw,rho)
-
-    return V_LO
-
 #----------------------Turns and Loads-------------------------
 
 #Turning radius from the bank angle and airspeed.
@@ -861,7 +846,7 @@ def accel_distance_calculator_simple_thrust(tau, T_S, T_LO, W, u_r, Sw, CL, CL_m
     Args:
         tau (float): Throttle percentage. Range: 0 - 1. Where zero is 0 % throttle and one is 100% throttle
         T_S (float): Static thrust of the powerplant. (Thrust at 0 airspeed)
-        T_LO (float): Thrust at lift-off airspeed. (Can be calculated using the "velocity_Lift_Off" fuction)
+        T_LO (float): Thrust at lift-off airspeed. (Can be calculated using the "velocity_lift_off" fuction)
         W (float): Weight of the aircraft
         u_r (float): Coefficient of friction for rolling tires
         Sw (float): Area of the main wing
@@ -877,7 +862,7 @@ def accel_distance_calculator_simple_thrust(tau, T_S, T_LO, W, u_r, Sw, CL, CL_m
     #your re-worked equations from 3.10 equation reworks.pdf
 
     #Get the lift off velocity
-    V_LO = velocity_Lift_Off(CL_max,W,Sw,rho)
+    V_LO = velocity_lift_off(CL_max,W,Sw,rho)
 
     #Calculate the average thrust
     T_bar = (T_S + T_LO)/2
@@ -928,7 +913,7 @@ def rotation_distance_calc(V_LO,V_hw,t_r):
     """Calculates the distance covered during rotation of an aircraft to take off attitude.
 
     Args:
-        V_LO (float): Lift off velocity (rotation speed). Can be computed using "velocity_Lift_Off" function.
+        V_LO (float): Lift off velocity (rotation speed). Can be computed using "velocity_lift_off" function.
         V_hw (float): Headwind (positive assumes headwind, negative assumes tailwind)
         t_r (float): assumed rotation time in seconds. (Typical rotation times range from 1-3 seconds varying with the aircraft)
     """
@@ -937,11 +922,32 @@ def rotation_distance_calc(V_LO,V_hw,t_r):
     
     return s_rot
 
+#Simple Ground Roll distance from 3.10.39
+def ground_roll_distance_approx(W,rho,Sw,CL_max,T,D,F_r,t_r,g=32.17405):
+    """Approximates the ground roll distance(acceleration and rotation distances combined) for a fixed wing aircraft to take off. Assumes no wind scenario.
 
-#Finally, I think you can also program Eq. 3.10.39 that is a less computationally expensive first approx with no wind
+    Args:
+        W (float): Weight of the aircraft
+        rho (float): Air density
+        Sw (float): Area of the maing wing
+        CL_max (float): Max lift coefficient in take off configuration
+        T (float): Thrust force applied to the aircraft during takeoff evaluated at 0.7 the lift off speed of the aircraft (positive out the nose of the aircraft)
+        D (float): Drag force applied to the aircraft during takeoff evaluated at 0.7 the lift off speed of the aircraft (positive out the tail of the aircraft)
+        F_r (float): Frictional force applied during takeoff evaluated at 0.7 the lift off speed of the aircraft (positive out the tail of the aircraft)
+        t_r (float): Assumed rotation time in seconds. (Typical rotation times range from 1-3 seconds varying with the aircraft)
+        g (float, optional): Acceleration due to gravity. Defaults to 32.17405 for English units
+    """
+    #Eq. 3.10.39 from Warren Phillips Mechanics of Flight
+    term1_num = 1.21*W*W
+    term1_den = rho*g*Sw*CL_max*(T - D - F_r)
+    term1 = term1_num/term1_den
+    term2 = t_r*velocity_lift_off(CL_max,W,Sw,rho)
+    sg = term1 + term2
+
+    return sg
 
 
 #Test Input
-print(327 + rotation_distance_calc(104.44,29.33,1))
+print(ground_roll_distance_approx(2700,0.0023769,180,1.4,1050,49.1318,80,1.1))
 
 
